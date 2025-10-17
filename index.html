@@ -11,7 +11,6 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <style>
-    /* Simplified layout and your original style preserved */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
     .container { max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -97,11 +96,12 @@
     </div>
   </div>
 
-  <!-- Firebase + JS Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  <!-- Firebase (compat version for GitHub Pages) -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database-compat.js"></script>
 
+  <script>
+    // --- Firebase initialization ---
     const firebaseConfig = {
       apiKey: "AIzaSyDtcbrXsbnsaF3UnOytjX50YT7AERwjWJs",
       authDomain: "finalcheckin-7910c.firebaseapp.com",
@@ -112,48 +112,57 @@
       appId: "1:344047110499:web:256be73a4b5c75d558ab56"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const recordsRef = ref(db, 'records/');
+    firebase.initializeApp(firebaseConfig);
 
+    // ✅ Disable WebSockets for restricted networks (use long-polling)
+    firebase.database.INTERNAL.forceWebSockets_ = false;
+
+    const db = firebase.database();
+    const recordsRef = db.ref("records");
+
+    // Declare globals early
     let firebaseRecords = [];
     let currentSoldier = null;
     let videoStream = null;
     let scanning = false;
     let canvasContext = null;
 
-    onValue(recordsRef, (snapshot) => {
+    console.log("✅ Firebase initialized (long-polling mode). Listening for data...");
+
+    recordsRef.on("value", (snapshot) => {
       const data = snapshot.val();
       firebaseRecords = data ? Object.values(data) : [];
-      console.log("🔄 Firebase synced:", firebaseRecords.length, "records");
+      console.log("📡 Firebase synced:", firebaseRecords.length, "records");
     });
 
-    document.addEventListener('DOMContentLoaded', () => initializeCanvas());
+    document.addEventListener("DOMContentLoaded", () => initializeCanvas());
 
+    // --- Tabs ---
     function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
-      if (tabName !== 'scanner') stopCamera();
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById(tabName).classList.add("active");
+      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add("active");
+      if (tabName !== "scanner") stopCamera();
     }
 
+    // --- Camera ---
     function initializeCanvas() {
-      const canvas = document.getElementById('canvas');
-      canvasContext = canvas.getContext('2d');
+      const canvas = document.getElementById("canvas");
+      canvasContext = canvas.getContext("2d");
     }
 
     async function startCamera() {
       try {
         showCameraStatus("Starting camera...");
-        const video = document.getElementById('video');
-        video.style.display = 'block';
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const video = document.getElementById("video");
+        video.style.display = "block";
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         video.srcObject = videoStream;
         video.onloadedmetadata = () => {
           video.play();
-          document.getElementById('startBtn').style.display = 'none';
-          document.getElementById('stopBtn').style.display = 'inline-block';
+          document.getElementById("startBtn").style.display = "none";
+          document.getElementById("stopBtn").style.display = "inline-block";
           hideCameraStatus();
           scanning = true;
           scanQRCode();
@@ -168,25 +177,26 @@
       if (videoStream) videoStream.getTracks().forEach(track => track.stop());
       videoStream = null;
       scanning = false;
-      document.getElementById('video').style.display = 'none';
-      document.getElementById('startBtn').style.display = 'inline-block';
-      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById("video").style.display = "none";
+      document.getElementById("startBtn").style.display = "inline-block";
+      document.getElementById("stopBtn").style.display = "none";
       hideCameraStatus();
     }
 
     function showCameraStatus(msg) {
-      const el = document.getElementById('cameraStatus');
+      const el = document.getElementById("cameraStatus");
       el.textContent = msg;
-      el.style.display = 'block';
+      el.style.display = "block";
     }
+
     function hideCameraStatus() {
-      document.getElementById('cameraStatus').style.display = 'none';
+      document.getElementById("cameraStatus").style.display = "none";
     }
 
     function scanQRCode() {
       if (!scanning) return;
-      const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -205,17 +215,18 @@
       if (scanning) requestAnimationFrame(scanQRCode);
     }
 
+    // --- QR Parsing + Display ---
     function parseVCard(text) {
-      const lines = text.split('\n');
+      const lines = text.split("\n");
       const data = {};
       for (let l of lines) {
-        if (l.startsWith('FN:')) data.fullName = l.replace('FN:', '').trim();
-        if (l.startsWith('N:')) {
-          const [last, first] = l.replace('N:', '').split(';');
+        if (l.startsWith("FN:")) data.fullName = l.replace("FN:", "").trim();
+        if (l.startsWith("N:")) {
+          const [last, first] = l.replace("N:", "").split(";");
           data.lastName = last; data.firstName = first;
         }
-        if (l.startsWith('TITLE:')) data.rank = l.replace('TITLE:', '').trim();
-        if (l.startsWith('UID:')) data.id = l.replace('UID:', '').trim();
+        if (l.startsWith("TITLE:")) data.rank = l.replace("TITLE:", "").trim();
+        if (l.startsWith("UID:")) data.id = l.replace("UID:", "").trim();
       }
       if (!data.id) data.id = data.fullName;
       if (!data.rank) data.rank = "Unknown";
@@ -223,27 +234,28 @@
     }
 
     function displaySoldierInfo(soldier) {
-      document.getElementById('soldierName').textContent = soldier.fullName;
-      document.getElementById('soldierRank').textContent = soldier.rank;
-      document.getElementById('soldierInfo').style.display = 'block';
-      showAlert(`Scanned ${soldier.fullName}`, 'success');
+      document.getElementById("soldierName").textContent = soldier.fullName;
+      document.getElementById("soldierRank").textContent = soldier.rank;
+      document.getElementById("soldierInfo").style.display = "block";
+      showAlert(`Scanned ${soldier.fullName}`, "success");
     }
 
     function continueScanning() {
-      document.getElementById('soldierInfo').style.display = 'none';
+      document.getElementById("soldierInfo").style.display = "none";
       startCamera();
     }
 
+    // --- Firebase actions ---
     function checkIn() {
       if (!currentSoldier) return;
       const record = {
         ...currentSoldier,
         action: "IN",
         timestamp: new Date().toISOString(),
-        date: new Date().toLocaleDateString('en-CA')
+        date: new Date().toLocaleDateString("en-CA")
       };
-      push(recordsRef, record);
-      showAlert(`${record.name || record.fullName} checked IN`, 'success');
+      recordsRef.push(record);
+      showAlert(`${record.fullName} checked IN`, "success");
     }
 
     function checkOut() {
@@ -252,30 +264,30 @@
         ...currentSoldier,
         action: "OUT",
         timestamp: new Date().toISOString(),
-        date: new Date().toLocaleDateString('en-CA')
+        date: new Date().toLocaleDateString("en-CA")
       };
-      push(recordsRef, record);
-      showAlert(`${record.name || record.fullName} checked OUT`, 'success');
+      recordsRef.push(record);
+      showAlert(`${record.fullName} checked OUT`, "success");
     }
 
     function generateDateReport() {
-      const date = document.getElementById('reportDate').value;
+      const date = document.getElementById("reportDate").value;
       const filtered = firebaseRecords.filter(r => r.date === date);
       let html = `<h4>Report for ${date}</h4>`;
       if (!filtered.length) html += "<p>No data.</p>";
       else html += `<p>Total records: ${filtered.length}</p>`;
-      document.getElementById('reportResults').innerHTML = html;
+      document.getElementById("reportResults").innerHTML = html;
     }
 
     function showAlert(msg, type) {
-      const el = document.getElementById('alert');
+      const el = document.getElementById("alert");
       el.textContent = msg;
-      el.style.display = 'block';
+      el.style.display = "block";
       el.className = `alert alert-${type}`;
-      setTimeout(() => (el.style.display = 'none'), 3000);
+      setTimeout(() => (el.style.display = "none"), 3000);
     }
 
-    // Expose functions for HTML buttons
+    // Expose functions globally
     window.switchTab = switchTab;
     window.startCamera = startCamera;
     window.stopCamera = stopCamera;
