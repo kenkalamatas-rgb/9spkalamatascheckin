@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🇬🇷 Soldier Tracker (Firebase Online)</title>
+  <title>🇬🇷 Σύστημα Παρουσίας Στρατιωτών</title>
 
   <!-- Excel export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -32,7 +32,7 @@
     .alert { padding: 12px; border-radius: 6px; margin: 10px 0; text-align: center; font-weight: bold; }
     .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
 
-    /* Dashboard table */
+    /* Πίνακας Dashboard */
     table { width: 100%; border-collapse: collapse; font-size: 15px; border-radius: 8px; overflow: hidden; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background: #2c3e50; color: #fff; }
@@ -43,23 +43,23 @@
 <body>
   <div class="container">
     <header>
-      <h1>🇬🇷 Soldier Tracker</h1>
-      <p>Firebase-Connected Check-in/Out System</p>
+      <h1>🇬🇷 Σύστημα Παρουσίας Στρατιωτών</h1>
+      <p>Συνδεδεμένο με Firebase</p>
     </header>
 
     <div class="tab-container">
       <div class="tabs">
-        <button class="tab active" onclick="switchTab('scanner')">Scanner</button>
-        <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
-        <button class="tab" onclick="switchTab('reports')">Reports</button>
+        <button class="tab active" onclick="switchTab('scanner')">Σάρωση</button>
+        <button class="tab" onclick="switchTab('dashboard')">Πίνακας</button>
+        <button class="tab" onclick="switchTab('reports')">Αναφορές</button>
       </div>
 
-      <!-- Scanner -->
+      <!-- Σάρωση -->
       <div id="scanner" class="tab-content active">
-        <h3>Scan QR Code</h3>
+        <h3>Σάρωση Κωδικού QR</h3>
         <div style="text-align:center;">
-          <button class="btn btn-primary" onclick="startCamera()" id="startBtn">Start Camera</button>
-          <button class="btn btn-danger" onclick="stopCamera()" id="stopBtn" style="display:none;">Stop Camera</button>
+          <button class="btn btn-primary" onclick="startCamera()" id="startBtn">Έναρξη Κάμερας</button>
+          <button class="btn btn-danger" onclick="stopCamera()" id="stopBtn" style="display:none;">Διακοπή Κάμερας</button>
         </div>
 
         <div id="video-container">
@@ -69,35 +69,35 @@
         </div>
 
         <div id="cameraStatus" class="alert alert-warning" style="display:none;">
-          Camera is starting... Please allow access.
+          Η κάμερα ξεκινά... Παρακαλώ επιτρέψτε πρόσβαση.
         </div>
 
         <div id="soldierInfo" style="display:none; margin-top:20px;">
-          <h4>Soldier Info:</h4>
-          <p><strong>Name:</strong> <span id="soldierName"></span></p>
-          <p><strong>Rank:</strong> <span id="soldierRank"></span></p>
+          <h4>Πληροφορίες Στρατιώτη:</h4>
+          <p><strong>Όνομα:</strong> <span id="soldierName"></span></p>
+          <p><strong>Βαθμός:</strong> <span id="soldierRank"></span></p>
           <div style="margin-top:10px;">
             <button class="btn btn-success" onclick="checkIn()">Check IN</button>
             <button class="btn btn-danger" onclick="checkOut()">Check OUT</button>
-            <button class="btn btn-primary" onclick="continueScanning()">Scan Another</button>
+            <button class="btn btn-primary" onclick="continueScanning()">Σάρωση Άλλου</button>
           </div>
         </div>
         <div id="alert" class="alert" style="display:none;"></div>
       </div>
 
-      <!-- Dashboard -->
+      <!-- Πίνακας -->
       <div id="dashboard" class="tab-content">
-        <h3>Dashboard</h3>
-        <button class="btn btn-danger" onclick="resetDatabase()">Reset All Data</button>
-        <p>Currently checked-in soldiers will appear here.</p>
+        <h3>Πίνακας</h3>
+        <button class="btn btn-danger" onclick="resetDatabase()">Επαναφορά Όλων</button>
+        <p>Εμφανίζονται μόνο οι στρατιώτες που είναι αυτή τη στιγμή παρόντες.</p>
         <div id="dashboardTable"></div>
       </div>
 
-      <!-- Reports -->
+      <!-- Αναφορές -->
       <div id="reports" class="tab-content">
-        <h3>Reports</h3>
+        <h3>Αναφορές</h3>
         <input type="date" id="reportDate" />
-        <button class="btn btn-primary" onclick="generateExcelReport()">Download Excel Report</button>
+        <button class="btn btn-primary" onclick="generateExcelReport()">Λήψη Αναφοράς (Excel)</button>
         <div id="reportResults" style="margin-top:10px;"></div>
       </div>
     </div>
@@ -108,7 +108,7 @@
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database-compat.js"></script>
 
   <script>
-    // --- Firebase Initialization ---
+    // --- Ρυθμίσεις Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyDtcbrXsbnsaF3UnOytjX50YT7AERwjWJs",
       authDomain: "finalcheckin-7910c.firebaseapp.com",
@@ -133,7 +133,7 @@
 
     console.log("✅ Firebase initialized (long-polling mode). Listening for data...");
 
-    // ✅ Dashboard: only show soldiers whose latest record is "IN"
+    // ✅ Πίνακας: εμφάνιση μόνο όσων είναι αυτή τη στιγμή "IN"
     document.addEventListener("DOMContentLoaded", () => {
       const dashboardTable = document.getElementById("dashboardTable");
 
@@ -142,7 +142,6 @@
         firebaseRecords = data ? Object.values(data) : [];
         console.log("📡 Firebase synced:", firebaseRecords.length, "records");
 
-        // group by soldier ID and keep the latest record
         const lastActions = {};
         firebaseRecords.forEach(r => {
           if (!r.id) return;
@@ -154,7 +153,7 @@
         const active = Object.values(lastActions).filter(r => r.action === "IN");
 
         if (!active.length) {
-          dashboardTable.innerHTML = "<p>No soldiers currently checked in.</p>";
+          dashboardTable.innerHTML = "<p>Δεν υπάρχουν στρατιώτες παρόντες.</p>";
           return;
         }
 
@@ -162,20 +161,22 @@
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Rank</th>
-                <th>Checked In Time</th>
+                <th>Όνομα</th>
+                <th>Βαθμός</th>
+                <th>Ώρα Εισόδου</th>
               </tr>
             </thead>
             <tbody>
         `;
 
         active.forEach(r => {
-          const time = new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const time = new Date(r.timestamp).toLocaleTimeString('el-GR', {
+            hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Athens'
+          });
           html += `
             <tr>
-              <td>${r.fullName || "Unknown"}</td>
-              <td>${r.rank || "Unknown"}</td>
+              <td>${r.fullName || "Άγνωστο"}</td>
+              <td>${r.rank || "Άγνωστο"}</td>
               <td>${time}</td>
             </tr>
           `;
@@ -186,21 +187,21 @@
       });
     });
 
-    // ✅ Reset Firebase database
+    // ✅ Επαναφορά Firebase
     function resetDatabase() {
-      if (confirm("⚠️ Are you sure you want to delete ALL records?")) {
+      if (confirm("⚠️ Είστε σίγουροι ότι θέλετε να διαγράψετε όλα τα δεδομένα;")) {
         recordsRef.remove();
-        alert("Database reset complete.");
+        alert("Η βάση δεδομένων επαναφέρθηκε.");
       }
     }
 
-    // ✅ Excel report
+    // ✅ Αναφορά Excel (σε ελληνικό χρόνο και όνομα αρχείου)
     function generateExcelReport() {
       const date = document.getElementById("reportDate").value;
-      if (!date) return alert("Select a date first!");
+      if (!date) return alert("Επιλέξτε ημερομηνία πρώτα!");
 
       const records = firebaseRecords.filter(r => r.date === date);
-      if (!records.length) return alert("No records for that date.");
+      if (!records.length) return alert("Δεν υπάρχουν εγγραφές για αυτήν την ημερομηνία.");
 
       const grouped = {};
       for (const r of records) {
@@ -208,7 +209,7 @@
         grouped[r.id].push(r);
       }
 
-      const rows = [["Name", "Rank", "Check-In Time", "Check-Out Time", "Total Hours"]];
+      const rows = [["Όνομα", "Βαθμός", "Ώρα Εισόδου", "Ώρα Εξόδου", "Συνολικές Ώρες"]];
       for (const id in grouped) {
         const entries = grouped[id].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
         const firstIn = entries.find(e => e.action === "IN");
@@ -217,14 +218,20 @@
           const checkInTime = new Date(firstIn.timestamp);
           const checkOutTime = new Date(lastOut.timestamp);
           const diffHrs = ((checkOutTime - checkInTime) / 3600000).toFixed(2);
-          rows.push([firstIn.fullName, firstIn.rank, checkInTime.toLocaleTimeString(), checkOutTime.toLocaleTimeString(), diffHrs]);
+          rows.push([
+            firstIn.fullName,
+            firstIn.rank,
+            checkInTime.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Athens' }),
+            checkOutTime.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Athens' }),
+            diffHrs
+          ]);
         }
       }
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      XLSX.utils.book_append_sheet(wb, ws, "Report");
-      XLSX.writeFile(wb, `Soldier_Report_${date}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, "Αναφορά");
+      XLSX.writeFile(wb, `Αναφορά_Ημερομηνίας_${date}.xlsx`);
     }
 
     // --- Scanner + Firebase logic ---
@@ -243,7 +250,7 @@
 
     async function startCamera() {
       try {
-        showCameraStatus("Starting camera...");
+        showCameraStatus("Εκκίνηση κάμερας...");
         const video = document.getElementById("video");
         video.style.display = "block";
         videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -258,7 +265,7 @@
         };
       } catch (err) {
         console.error(err);
-        showCameraStatus("Camera access denied. Please allow permissions.");
+        showCameraStatus("Δεν δόθηκε άδεια για την κάμερα.");
       }
     }
 
@@ -313,8 +320,8 @@
         if (l.startsWith("TITLE:")) data.rank = l.replace("TITLE:", "").trim();
         if (l.startsWith("UID:")) data.id = l.replace("UID:", "").trim();
       }
-      if (!data.id) data.id = data.fullName;
-      if (!data.rank) data.rank = "Unknown";
+      if (!data.id) data.id = (data.fullName || "Άγνωστο") + "-" + Math.random().toString(36).substring(2, 8);
+      if (!data.rank) data.rank = "Άγνωστο";
       return data;
     }
 
@@ -322,7 +329,7 @@
       document.getElementById("soldierName").textContent = soldier.fullName;
       document.getElementById("soldierRank").textContent = soldier.rank;
       document.getElementById("soldierInfo").style.display = "block";
-      showAlert(`Scanned ${soldier.fullName}`, "success");
+      showAlert(`Σαρώθηκε ο/η ${soldier.fullName}`, "success");
     }
 
     function continueScanning() {
@@ -336,10 +343,10 @@
         ...currentSoldier,
         action: "IN",
         timestamp: new Date().toISOString(),
-        date: new Date().toLocaleDateString("en-CA")
+        date: new Date().toLocaleDateString("el-GR", { timeZone: "Europe/Athens" })
       };
       recordsRef.push(record);
-      showAlert(`${record.fullName} checked IN`, "success");
+      showAlert(`${record.fullName} έκανε Check IN`, "success");
     }
 
     function checkOut() {
@@ -348,10 +355,10 @@
         ...currentSoldier,
         action: "OUT",
         timestamp: new Date().toISOString(),
-        date: new Date().toLocaleDateString("en-CA")
+        date: new Date().toLocaleDateString("el-GR", { timeZone: "Europe/Athens" })
       };
       recordsRef.push(record);
-      showAlert(`${record.fullName} checked OUT`, "success");
+      showAlert(`${record.fullName} έκανε Check OUT`, "success");
     }
 
     function showAlert(msg, type) {
