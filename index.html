@@ -118,14 +118,11 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-
-    // ✅ Disable WebSockets (use long-polling for restricted networks)
     firebase.database.INTERNAL.forceWebSockets_ = false;
 
     const db = firebase.database();
     const recordsRef = db.ref("records");
 
-    // Declare globals early
     let firebaseRecords = [];
     let currentSoldier = null;
     let videoStream = null;
@@ -134,61 +131,63 @@
 
     console.log("✅ Firebase initialized (long-polling mode). Listening for data...");
 
-    // --- Realtime Firebase Sync ---
-    recordsRef.on("value", (snapshot) => {
-      const data = snapshot.val();
-      firebaseRecords = data ? Object.values(data) : [];
-      console.log("📡 Firebase synced:", firebaseRecords.length, "records");
-
-      // --- Update Dashboard ---
+    // --- Realtime Firebase Sync (wait until DOM is ready) ---
+    document.addEventListener("DOMContentLoaded", () => {
       const dashboard = document.getElementById("dashboard");
-      if (!dashboard) return;
 
-      if (!firebaseRecords.length) {
-        dashboard.innerHTML = `
-          <h3>Dashboard</h3>
-          <p>No records found yet.</p>
-        `;
-        return;
-      }
+      recordsRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        firebaseRecords = data ? Object.values(data) : [];
+        console.log("📡 Firebase synced:", firebaseRecords.length, "records");
 
-      let html = `
-        <h3>Dashboard</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Rank</th>
-              <th>Action</th>
-              <th>Date</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
+        if (!dashboard) return;
 
-      firebaseRecords
-        .slice()
-        .reverse()
-        .forEach(r => {
-          const time = new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          html += `
-            <tr>
-              <td>${r.fullName || r.name || "Unknown"}</td>
-              <td>${r.rank || "Unknown"}</td>
-              <td style="color:${r.action === "IN" ? "green" : "red"}; font-weight:bold;">${r.action}</td>
-              <td>${r.date || ""}</td>
-              <td>${time}</td>
-            </tr>
+        if (!firebaseRecords.length) {
+          dashboard.innerHTML = `
+            <h3>Dashboard</h3>
+            <p>No records found yet.</p>
           `;
-        });
+          return;
+        }
 
-      html += `
-          </tbody>
-        </table>
-      `;
+        let html = `
+          <h3>Dashboard</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Rank</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
 
-      dashboard.innerHTML = html;
+        firebaseRecords
+          .slice()
+          .reverse()
+          .forEach(r => {
+            const time = new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            html += `
+              <tr>
+                <td>${r.fullName || r.name || "Unknown"}</td>
+                <td>${r.rank || "Unknown"}</td>
+                <td style="color:${r.action === "IN" ? "green" : "red"}; font-weight:bold;">${r.action}</td>
+                <td>${r.date || ""}</td>
+                <td>${time}</td>
+              </tr>
+            `;
+          });
+
+        html += `
+            </tbody>
+          </table>
+        `;
+
+        dashboard.innerHTML = html;
+      });
     });
 
     // --- Tabs ---
